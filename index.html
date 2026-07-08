@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>狐狸潛艇造船廠 — 潛艇配件訂購</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#081D2A;
+    --bg-panel:#0F3347;
+    --bg-panel-2:#123B52;
+    --accent-brass:#C9974D;
+    --accent-brass-dim:#8C6B3B;
+    --ink-parchment:#F1E6CC;
+    --ink-parchment-dim:#DCCFAF;
+    --text-light:#DCE8E9;
+    --text-dim:#8FA8AE;
+    --accent-teal:#5FA8A0;
+    --stamp-red:#9C3B3B;
+    --line:rgba(201,151,77,0.25);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top, #0E2E40 0%, var(--bg-deep) 60%);
+    color:var(--text-light);
+    font-family:'Noto Sans TC', sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* ---------- Header ---------- */
+  header{
+    text-align:center;
+    padding:36px 20px 30px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:36px;
+    position:relative;
+  }
+  .gauge-icon{width:46px;height:46px;margin:0 auto 14px;opacity:0.9;}
+  .eyebrow{
+    font-family:'Cinzel', serif;
+    letter-spacing:0.35em;
+    font-size:11px;
+    color:var(--accent-brass);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'Noto Serif TC', serif;
+    font-weight:700;
+    font-size:clamp(28px,4vw,42px);
+    margin:0 0 10px;
+    color:var(--ink-parchment);
+    letter-spacing:0.04em;
+  }
+  .sub{color:var(--text-dim);font-size:14px;letter-spacing:0.05em;}
+  .seller-id{
+    display:inline-block;
+    margin-top:14px;
+    padding:10px 22px;
+    border:1px solid var(--accent-brass-dim);
+    border-radius:10px;
+    font-family:'Cinzel',serif;
+    font-size:16px;
+    letter-spacing:0.05em;
+    color:var(--accent-brass);
+    background:rgba(201,151,77,0.08);
+    line-height:1.7;
+    text-align:center;
+  }
+
+  /* ---------- Layout ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:1.5fr 1fr;
+    gap:32px;
+    align-items:start;
+  }
+  @media (max-width:880px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .section-title{
+    font-family:'Noto Serif TC',serif;
+    font-size:15px;
+    color:var(--accent-brass);
+    letter-spacing:0.08em;
+    margin:34px 0 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-title:first-child{margin-top:0;}
+  .section-title::after{
+    content:'';
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+
+  /* ---------- Part rows ---------- */
+  .category-block{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:6px 18px;
+  }
+  .part-row{
+    display:grid;
+    grid-template-columns:1fr 100px auto;
+    align-items:center;
+    padding:14px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    gap:12px;
+  }
+  .part-row:last-child{border-bottom:none;}
+  .part-name{font-size:15px;color:var(--text-light);}
+  .part-price{
+    font-family:'Cinzel',serif;
+    color:var(--accent-brass);
+    font-size:16px;
+    min-width:100px;
+    text-align:right;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-panel-2);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:4px 6px;
+  }
+  .stepper button{
+    width:26px;height:26px;
+    border-radius:50%;
+    border:1px solid var(--accent-brass-dim);
+    background:transparent;
+    color:var(--accent-brass);
+    font-size:15px;
+    cursor:pointer;
+    line-height:1;
+    transition:background .15s;
+  }
+  .stepper button:hover{background:rgba(201,151,77,0.15);}
+  .stepper .qty{
+    width:20px;
+    text-align:center;
+    font-family:'Cinzel',serif;
+    font-size:14px;
+    color:var(--ink-parchment);
+  }
+
+  /* ---------- Combo cards ---------- */
+  .combo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:560px){.combo-grid{grid-template-columns:1fr;}}
+  .combo-card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:18px;
+    transition:border-color .15s;
+    position:relative;
+  }
+  .combo-card.has-qty{
+    border-color:var(--accent-brass);
+    background:var(--bg-panel-2);
+  }
+  .combo-name{font-family:'Noto Serif TC',serif;font-size:16px;color:var(--ink-parchment);margin-bottom:6px;}
+  .combo-includes{font-size:12px;color:var(--text-dim);line-height:1.7;margin-bottom:12px;}
+  .combo-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .combo-price{font-family:'Cinzel',serif;color:var(--accent-brass);font-size:15px;}
+
+  /* ---------- Manifest (order slip) ---------- */
+  .manifest{
+    position:sticky;
+    top:24px;
+    background:var(--ink-parchment);
+    color:#3A2E1E;
+    border-radius:4px;
+    padding:0;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+  }
+  .manifest-notch{
+    height:14px;
+    background:
+      radial-gradient(circle at 10px 0, transparent 8px, var(--ink-parchment) 8px) 0 0/20px 14px repeat-x,
+      var(--bg-deep);
+  }
+  .manifest-body{padding:22px 24px 24px;}
+  .manifest-head{
+    text-align:center;
+    border-bottom:2px dashed rgba(58,46,30,0.25);
+    padding-bottom:14px;
+    margin-bottom:16px;
+  }
+  .manifest-head .title{
+    font-family:'Noto Serif TC',serif;
+    font-weight:700;
+    font-size:18px;
+    letter-spacing:0.06em;
+  }
+  .manifest-head .no{
+    font-family:'Cinzel',serif;
+    font-size:11px;
+    color:#7A5F3A;
+    letter-spacing:0.1em;
+    margin-top:4px;
+  }
+  .manifest-items{min-height:40px;margin-bottom:14px;}
+  .manifest-empty{font-size:13px;color:#8A7A5C;text-align:center;padding:16px 0;}
+  .manifest-item{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    padding:6px 0;
+    border-bottom:1px dotted rgba(58,46,30,0.2);
+  }
+  .manifest-item .name{color:#4A3B24;}
+  .manifest-item .amt{font-family:'Cinzel',serif;color:#5A4426;}
+
+  .depth-wrap{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin:16px 0;
+    padding:12px;
+    background:rgba(58,46,30,0.06);
+    border-radius:6px;
+  }
+  .depth-track{
+    width:14px;height:80px;
+    border-radius:8px;
+    background:rgba(58,46,30,0.15);
+    position:relative;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .depth-fill{
+    position:absolute;
+    bottom:0;left:0;right:0;
+    height:0%;
+    background:linear-gradient(180deg, var(--accent-teal), #2E6E68);
+    transition:height .4s ease;
+  }
+  .depth-label{font-size:12px;color:#6B5A3E;line-height:1.6;}
+  .depth-label b{
+    font-family:'Cinzel',serif;
+    color:#3A2E1E;
+    font-size:16px;
+    display:block;
+  }
+
+  .total-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    border-top:2px solid rgba(58,46,30,0.3);
+    padding-top:12px;
+    margin-bottom:18px;
+  }
+  .total-row .label{font-family:'Noto Serif TC',serif;font-size:14px;}
+  .total-row .value{font-family:'Cinzel',serif;font-size:22px;font-weight:700;}
+
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color:#6B5A3E;
+    margin-bottom:5px;
+    letter-spacing:0.03em;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid rgba(58,46,30,0.3);
+    border-radius:4px;
+    background:rgba(255,255,255,0.5);
+    font-family:'Noto Sans TC',sans-serif;
+    font-size:13px;
+    color:#3A2E1E;
+    resize:vertical;
+  }
+  .field textarea{min-height:56px;}
+  .datetime-row{
+    display:flex;
+    gap:8px;
+  }
+  .datetime-row input[type="date"]{flex:1.2;}
+  .datetime-row select{flex:1;}
+
+  .submit-btn{
+    width:100%;
+    padding:13px;
+    margin-top:6px;
+    border:none;
+    border-radius:4px;
+    background:var(--bg-deep);
+    color:var(--accent-brass);
+    font-family:'Noto Serif TC',serif;
+    font-size:15px;
+    letter-spacing:0.08em;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  .submit-btn:hover{background:#0a2536;}
+  .submit-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .status-msg{
+    margin-top:12px;
+    font-size:13px;
+    text-align:center;
+    padding:10px;
+    border-radius:4px;
+    display:none;
+  }
+  .status-msg.ok{
+    display:block;
+    background:rgba(95,168,160,0.15);
+    color:#2E6E68;
+    border:1px solid rgba(95,168,160,0.4);
+  }
+  .status-msg.err{
+    display:block;
+    background:rgba(156,59,59,0.1);
+    color:var(--stamp-red);
+    border:1px solid rgba(156,59,59,0.35);
+  }
+
+  .stamp{
+    position:absolute;
+    top:40%;left:50%;
+    transform:translate(-50%,-50%) rotate(-14deg) scale(0.6);
+    font-family:'Cinzel',serif;
+    font-size:34px;
+    font-weight:700;
+    color:var(--stamp-red);
+    border:5px solid var(--stamp-red);
+    border-radius:10px;
+    padding:6px 22px;
+    opacity:0;
+    pointer-events:none;
+    transition:all .5s cubic-bezier(.2,1.4,.4,1);
+    z-index:5;
+  }
+  .stamp.show{
+    opacity:0.85;
+    transform:translate(-50%,-50%) rotate(-14deg) scale(1);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="gauge-icon" viewBox="0 0 48 48" fill="none">
+      <circle cx="24" cy="24" r="21" stroke="#C9974D" stroke-width="2"/>
+      <circle cx="24" cy="24" r="2.5" fill="#C9974D"/>
+      <path d="M24 24 L24 9" stroke="#C9974D" stroke-width="2" stroke-linecap="round"/>
+      <path d="M14 30 Q24 34 34 30" stroke="#5FA8A0" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="eyebrow">Vulpes Submersible Works</div>
+    <h1>狐狸潛艇造船廠</h1>
+    <div class="sub">FF14繁中服，潛艇訂購服務</div>
+    <div class="seller-id">賣家所在World：利維坦<br>糖狐蘆　|　梨花醉<br>交易地點：利維坦 沙都 1線 乙太之光旁</div>
+  </header>
+
+  <div class="grid">
+    <!-- ============ LEFT: 目錄 ============ -->
+    <div>
+      <div class="section-title">整組套裝</div>
+      <div class="combo-grid" id="combo-container"></div>
+
+      <div class="section-title">單項配件</div>
+      <div id="parts-container"></div>
+    </div>
+
+    <!-- ============ RIGHT: 訂單申請單 ============ -->
+    <div class="manifest">
+      <div class="manifest-notch"></div>
+      <div class="manifest-body" style="position:relative;">
+        <div class="stamp" id="stamp">已受理</div>
+
+        <div class="manifest-head">
+          <div class="title">補給申請單</div>
+          <div class="no" id="manifest-no">NO. ------</div>
+        </div>
+
+        <div class="manifest-items" id="manifest-items">
+          <div class="manifest-empty">尚未選購任何配件</div>
+        </div>
+
+        <div class="depth-wrap">
+          <div class="depth-track"><div class="depth-fill" id="depth-fill"></div></div>
+          <div class="depth-label">預估下潛深度<br><b id="depth-value">0m</b></div>
+        </div>
+
+        <div class="total-row">
+          <div class="label">總金額</div>
+          <div class="value"><span id="total-value">0</span> Gil</div>
+        </div>
+
+        <form id="order-form">
+          <div class="field">
+            <label>角色名稱 / 暱稱</label>
+            <input type="text" id="f-name" required>
+          </div>
+          <div class="field">
+            <label>聯絡方式（Discord 帳號等）</label>
+            <input type="text" id="f-contact" required>
+          </div>
+          <div class="field">
+            <label>所屬伺服器</label>
+            <select id="f-server" required>
+              <option value="" disabled selected>請選擇</option>
+              <option value="伊弗利特">伊弗利特</option>
+              <option value="迦樓羅">迦樓羅</option>
+              <option value="利維坦">利維坦</option>
+              <option value="鳳凰">鳳凰</option>
+              <option value="奧汀">奧汀</option>
+              <option value="巴哈姆特">巴哈姆特</option>
+              <option value="泰坦">泰坦</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>期望交貨時間</label>
+            <div class="datetime-row">
+              <input type="date" id="f-date" required>
+              <select id="f-slot" required>
+                <option value="" disabled selected>選擇時段</option>
+                <option value="12:00–14:00">12:00–14:00</option>
+                <option value="18:00–20:00">18:00–20:00</option>
+                <option value="20:00–22:00">20:00–22:00</option>
+                <option value="22:00–24:00">22:00–24:00</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>其他備註</label>
+            <textarea id="f-note"></textarea>
+          </div>
+          <button type="submit" class="submit-btn" id="submit-btn">送出申請</button>
+          <div class="status-msg" id="status-msg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 隱藏 iframe，用來送出 Google表單而不跳轉頁面 -->
+<iframe name="hidden-submit-frame" style="display:none;"></iframe>
+
+<script>
+/* =====================================================================
+   一、配件與套裝清單 —— 在這裡改成你自己販賣的品項與價格即可
+   ===================================================================== */
+const PARTS = [
+  { category: '船體 Hull', items: [
+    { id:'1000', name:'鯊魚級船體',   price:200000 },
+    { id:'2000', name:'甲鱟級船體',   price:350000 },
+    { id:'3000', name:'鬚鯨級船體',   price:300000 },
+    { id:'4000', name:'腔棘魚級船體', price:550000 },
+  ]},
+  { category: '船尾 Stern', items: [
+    { id:'0100', name:'鯊魚級船尾',     price:200000 },
+    { id:'0200', name:'甲鱟級船尾',     price:400000 },
+    { id:'0300', name:'鬚鯨級船尾',     price:450000 },
+    { id:'0400', name:'腔棘魚級船尾',   price:550000 },
+  ]},
+  { category: '船首 Bow', items: [
+    { id:'0010', name:'鯊魚級船首',    price:200000 },
+    { id:'0020', name:'甲鱟級船首',    price:300000 },
+    { id:'0030', name:'鬚鯨級船首',    price:300000 },
+    { id:'0040', name:'腔棘魚級船首',  price:550000 },
+  ]},
+  { category: '艦橋 Bridge', items: [
+    { id:'0001',name:'鯊魚級艦橋',   price:200000 },
+    { id:'0002',name:'甲鱟級艦橋',   price:320000 },
+    { id:'0003',name:'鬚鯨級艦橋',   price:450000 },
+    { id:'0004',name:'腔棘魚級艦橋', price:400000 },
+  ]},
+];
+
+const COMBOS = [
+  {
+    id:'1111',
+    name:'初始套裝（1111）',
+    price:800000,
+    includes:['鯊魚級船體','鯊魚級船尾','鯊魚級船首','鯊魚級艦橋']
+  },
+  {
+    id:'1121',
+    name:'15級後進階套裝（1121）',
+    price:950000,
+    includes:['鯊魚級船體','鯊魚級船尾','甲鱟級船首','鯊魚級艦橋']
+  },
+  {
+    id:'3124',
+    name:'撈金畢業套裝（3124）',
+    price:1350000,
+    includes:['鬚鯨級船體','鯊魚級船尾','甲鱟級船首','腔棘魚級艦橋']
+  },
+  {
+    id:'3004',
+    name:'撈金升級套裝（3004）',
+    price:750000,
+    includes:['鬚鯨級船體','腔棘魚級艦橋']
+  },
+];
+
+/* =====================================================================
+   二、Google表單串接設定
+   步驟：
+   1. 建立一個 Google表單，欄位建議對應：角色名稱、聯絡方式、訂購明細、總金額、備註
+   2. 點表單右上角「傳送」→ 取得表單的 formResponse 網址：
+      在表單編輯畫面按「⋮」→「取得預先填寫的連結」，
+      或直接把表單網址的 /viewform 改成 /formResponse
+   3. 每個欄位的 entry.XXXXXXXXX 代碼，可以用「取得預先填寫的連結」功能，
+      在每個欄位填入一些文字後產生連結，網址上 entry.XXXXXXXXX= 前面那串數字就是了
+   4. 把下面的網址與 entry 代碼換成你自己表單的
+   ===================================================================== */
+const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSd60UDWJ86_jyICvw6jESsnJGATHpViZV7HR-kjgmEAOD_wpw/formResponse';
+const ENTRY = {
+  name:     'entry.2040558002', // 角色名稱
+  server:   'entry.1865778989', // 所屬伺服器
+  order:    'entry.671881031',  // 訂購明細（自動產生的文字）
+  total:    'entry.1360352395', // 總金額
+  delivery: 'entry.1358977331', // 期望交貨日期
+  note:     'entry.1583351389', // 其他備註
+};
+
+/* ===================================================================== */
+
+const state = { parts:{}, combos:{} };
+
+function fmt(n){
+  return n.toLocaleString();
+}
+
+function renderParts(){
+  const wrap = document.getElementById('parts-container');
+  wrap.innerHTML = PARTS.map(cat => `
+    <div class="section-title" style="margin-top:22px;font-size:13px;">${cat.category}</div>
+    <div class="category-block">
+      ${cat.items.map(item => `
+        <div class="part-row">
+          <div class="part-name">${item.name}</div>
+          <div class="part-price">${fmt(item.price)} Gil</div>
+          <div class="stepper">
+            <button type="button" onclick="changeQty('${item.id}',-1)">−</button>
+            <div class="qty" id="qty-${item.id}">0</div>
+            <button type="button" onclick="changeQty('${item.id}',1)">+</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderCombos(){
+  const wrap = document.getElementById('combo-container');
+  wrap.innerHTML = COMBOS.map(c => `
+    <div class="combo-card" id="combo-${c.id}">
+      <div class="combo-name">${c.name}</div>
+      <div class="combo-includes">內含：${c.includes.join('、')}</div>
+      <div class="combo-footer">
+        <div class="combo-price">${fmt(c.price)} Gil</div>
+        <div class="stepper">
+          <button type="button" onclick="changeComboQty('${c.id}',-1)">−</button>
+          <div class="qty" id="qty-combo-${c.id}">0</div>
+          <button type="button" onclick="changeComboQty('${c.id}',1)">+</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta){
+  const current = state.parts[id] || 0;
+  const next = Math.max(0, Math.min(9, current + delta));
+  state.parts[id] = next;
+  document.getElementById(`qty-${id}`).textContent = next;
+  updateManifest();
+}
+
+function changeComboQty(id, delta){
+  const current = state.combos[id] || 0;
+  const next = Math.max(0, Math.min(9, current + delta));
+  state.combos[id] = next;
+  document.getElementById(`qty-combo-${id}`).textContent = next;
+  document.getElementById(`combo-${id}`).classList.toggle('has-qty', next > 0);
+  updateManifest();
+}
+
+function findPart(id){
+  for(const cat of PARTS){
+    const found = cat.items.find(i=>i.id===id);
+    if(found) return found;
+  }
+  return null;
+}
+
+function buildOrderLines(){
+  const lines = [];
+  for(const [id, qty] of Object.entries(state.parts)){
+    if(qty > 0){
+      const part = findPart(id);
+      lines.push({ name:part.name, qty, subtotal: part.price * qty });
+    }
+  }
+  for(const combo of COMBOS){
+    const qty = state.combos[combo.id] || 0;
+    if(qty > 0){
+      lines.push({ name:combo.name, qty, subtotal: combo.price * qty });
+    }
+  }
+  return lines;
+}
+
+function updateManifest(){
+  const lines = buildOrderLines();
+  const itemsWrap = document.getElementById('manifest-items');
+  const total = lines.reduce((sum,l)=>sum+l.subtotal,0);
+
+  if(lines.length === 0){
+    itemsWrap.innerHTML = `<div class="manifest-empty">尚未選購任何配件</div>`;
+  } else {
+    itemsWrap.innerHTML = lines.map(l => `
+      <div class="manifest-item">
+        <span class="name">${l.name}${l.qty>1 ? ' ×'+l.qty : ''}</span>
+        <span class="amt">${fmt(l.subtotal)}</span>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('total-value').textContent = total.toLocaleString();
+
+  // 深度計：以總金額換算一個視覺化的下潛深度感（純裝飾，非遊戲內數值）
+  const depthPercent = Math.min(100, total / 20); // 每 20 Gil 約 1% 高度，上限 100%
+  const depthMeters = Math.min(2000, total * 1.5);
+  document.getElementById('depth-fill').style.height = depthPercent + '%';
+  document.getElementById('depth-value').textContent = Math.round(depthMeters) + 'm';
+}
+
+function generateManifestNo(){
+  const n = Math.floor(Math.random()*9000+1000);
+  document.getElementById('manifest-no').textContent = `NO. SM-${n}`;
+}
+
+/* ---------- 送出表單 ---------- */
+document.getElementById('order-form').addEventListener('submit', function(e){
+  e.preventDefault();
+
+  const lines = buildOrderLines();
+  if(lines.length === 0){
+    showStatus('請至少選擇一項配件或套裝再送出喔', 'err');
+    return;
+  }
+
+  const name = document.getElementById('f-name').value.trim();
+  const contact = document.getElementById('f-contact').value.trim();
+  const server = document.getElementById('f-server').value.trim();
+  const date = document.getElementById('f-date').value;
+  const slot = document.getElementById('f-slot').value;
+  const delivery = date && slot ? `${date}　${slot}` : (date || slot);
+  const note = document.getElementById('f-note').value.trim();
+  const total = lines.reduce((sum,l)=>sum+l.subtotal,0);
+  const orderText = lines.map(l => `${l.name}${l.qty>1?' x'+l.qty:''}（${fmt(l.subtotal)} Gil）`).join('\n')
+    + `\n\n（聯絡方式：${contact}）`;
+
+  // 動態建立一個表單，POST 到 Google表單，並用隱藏 iframe 接收避免跳轉頁面
+  const gform = document.createElement('form');
+  gform.action = GOOGLE_FORM_ACTION;
+  gform.method = 'POST';
+  gform.target = 'hidden-submit-frame';
+
+  const fields = {
+    [ENTRY.name]: name,
+    [ENTRY.server]: server,
+    [ENTRY.order]: orderText,
+    [ENTRY.total]: total,
+    [ENTRY.delivery]: delivery,
+    [ENTRY.note]: note,
+  };
+  for(const [key, val] of Object.entries(fields)){
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = key;
+    input.value = val;
+    gform.appendChild(input);
+  }
+  document.body.appendChild(gform);
+  gform.submit();
+  document.body.removeChild(gform);
+
+  // 顯示成功狀態與蓋章動畫
+  document.getElementById('submit-btn').disabled = true;
+  document.getElementById('stamp').classList.add('show');
+  showStatus('申請已送出，感謝訂購！', 'ok');
+
+  setTimeout(()=>{
+    // 重置表單，方便下一筆訂購
+    state.parts = {};
+    state.combos = {};
+    document.querySelectorAll('.qty').forEach(el => el.textContent = '0');
+    document.querySelectorAll('.combo-card').forEach(el => el.classList.remove('has-qty'));
+    document.getElementById('order-form').reset();
+    document.getElementById('submit-btn').disabled = false;
+    document.getElementById('stamp').classList.remove('show');
+    generateManifestNo();
+    updateManifest();
+  }, 2600);
+});
+
+function showStatus(msg, type){
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+}
+
+renderParts();
+renderCombos();
+generateManifestNo();
+updateManifest();
+
+// 交貨日期不能選今天以前
+document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>

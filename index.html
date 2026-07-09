@@ -148,7 +148,7 @@
   }
   .stepper button:hover{background:rgba(201,151,77,0.15);}
   .stepper .qty{
-    width:20px;
+    width:26px;
     text-align:center;
     font-family:'Cinzel',serif;
     font-size:14px;
@@ -227,6 +227,30 @@
   }
   .manifest-item .name{color:#4A3B24;}
   .manifest-item .amt{font-family:'Cinzel',serif;color:#5A4426;}
+
+  .parts-breakdown{
+    margin:14px 0;
+    padding:12px 14px;
+    background:rgba(58,46,30,0.06);
+    border-radius:6px;
+    border:1px dashed rgba(58,46,30,0.25);
+  }
+  .breakdown-title{
+    font-family:'Noto Serif TC',serif;
+    font-size:12px;
+    color:#7A5F3A;
+    letter-spacing:0.05em;
+    margin-bottom:8px;
+  }
+  .breakdown-body{
+    font-size:12.5px;
+    color:#4A3B24;
+    line-height:2;
+  }
+  .breakdown-body span{
+    display:inline-block;
+    margin-right:12px;
+  }
 
   .depth-wrap{
     display:flex;
@@ -420,6 +444,11 @@
           <div class="manifest-empty">尚未選購任何配件</div>
         </div>
 
+        <div class="parts-breakdown" id="parts-breakdown" style="display:none;">
+          <div class="breakdown-title">配件合計</div>
+          <div class="breakdown-body" id="breakdown-body"></div>
+        </div>
+
         <div class="depth-wrap">
           <div class="depth-track"><div class="depth-fill" id="depth-fill"></div></div>
           <div class="depth-label">預估下潛深度<br><b id="depth-value">0m</b></div>
@@ -610,7 +639,7 @@ function renderCombos(){
 
 function changeQty(id, delta){
   const current = state.parts[id] || 0;
-  const next = Math.max(0, Math.min(9, current + delta));
+  const next = Math.max(0, Math.min(20, current + delta));
   state.parts[id] = next;
   document.getElementById(`qty-${id}`).textContent = next;
   updateManifest();
@@ -618,7 +647,7 @@ function changeQty(id, delta){
 
 function changeComboQty(id, delta){
   const current = state.combos[id] || 0;
-  const next = Math.max(0, Math.min(9, current + delta));
+  const next = Math.max(0, Math.min(20, current + delta));
   state.combos[id] = next;
   document.getElementById(`qty-combo-${id}`).textContent = next;
   document.getElementById(`combo-${id}`).classList.toggle('has-qty', next > 0);
@@ -631,6 +660,45 @@ function findPart(id){
     if(found) return found;
   }
   return null;
+}
+
+function buildPartsBreakdown(){
+  const counts = {}; // 配件名稱 -> 總數量
+
+  // 單買的配件
+  for(const [id, qty] of Object.entries(state.parts)){
+    if(qty > 0){
+      const part = findPart(id);
+      counts[part.name] = (counts[part.name] || 0) + qty;
+    }
+  }
+
+  // 套裝內含的配件（依套裝購買數量倍增）
+  for(const combo of COMBOS){
+    const comboQty = state.combos[combo.id] || 0;
+    if(comboQty > 0){
+      combo.includes.forEach(partName => {
+        counts[partName] = (counts[partName] || 0) + comboQty;
+      });
+    }
+  }
+
+  // 依 PARTS 原本的分類順序輸出，順序穩定好對照
+  const lines = [];
+  for(const cat of PARTS){
+    for(const item of cat.items){
+      if(counts[item.name]){
+        lines.push({ name:item.name, qty:counts[item.name] });
+      }
+    }
+  }
+  return lines;
+}
+
+function formatPartsBreakdown(){
+  const lines = buildPartsBreakdown();
+  if(lines.length === 0) return '';
+  return lines.map(l => `${l.name}×${l.qty}`).join('　');
 }
 
 function buildOrderLines(){
@@ -667,6 +735,17 @@ function updateManifest(){
   }
 
   document.getElementById('total-value').textContent = total.toLocaleString();
+
+  // 備料統計：把套裝拆開＋單買配件加總
+  const breakdown = buildPartsBreakdown();
+  const breakdownWrap = document.getElementById('parts-breakdown');
+  if(breakdown.length === 0){
+    breakdownWrap.style.display = 'none';
+  } else {
+    breakdownWrap.style.display = 'block';
+    document.getElementById('breakdown-body').innerHTML =
+      breakdown.map(l => `<span>${l.name}×${l.qty}</span>`).join('');
+  }
 
   // 深度計：以總金額換算一個視覺化的下潛深度感（純裝飾，非遊戲內數值）
   const depthPercent = Math.min(100, total / 20); // 每 20 Gil 約 1% 高度，上限 100%
@@ -708,6 +787,7 @@ document.getElementById('order-form').addEventListener('submit', function(e){
   const note = document.getElementById('f-note').value.trim();
   const total = lines.reduce((sum,l)=>sum+l.subtotal,0);
   const orderText = lines.map(l => `${l.name}${l.qty>1?' x'+l.qty:''}（${fmt(l.subtotal)} Gil）`).join('\n')
+    + `\n\n【備料統計】\n${formatPartsBreakdown()}`
     + `\n\n（聯絡方式：${contact}）`;
 
   // 動態建立一個表單，POST 到 Google表單，並用隱藏 iframe 接收避免跳轉頁面

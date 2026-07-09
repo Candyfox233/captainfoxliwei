@@ -489,7 +489,7 @@
           <div class="field">
             <label>期望交貨日期（限一個月內）</label>
             <input type="date" id="f-date" required>
-            <div class="field-hint">※ 5組（20個以上配件）以上大量訂單請一週前預訂</div>
+            <div class="field-hint">※ 5組以上大量訂單請一週前預訂</div>
           </div>
           <div class="field">
             <label>可接受的交貨時段（可複選）</label>
@@ -516,7 +516,6 @@
 </div>
 
 <!-- 隱藏 iframe，用來送出 Google表單而不跳轉頁面 -->
-<iframe name="hidden-submit-frame" style="display:none;"></iframe>
 
 <script>
 /* =====================================================================
@@ -577,25 +576,11 @@ const COMBOS = [
 ];
 
 /* =====================================================================
-   二、Google表單串接設定
-   步驟：
-   1. 建立一個 Google表單，欄位建議對應：角色名稱、聯絡方式、訂購明細、總金額、備註
-   2. 點表單右上角「傳送」→ 取得表單的 formResponse 網址：
-      在表單編輯畫面按「⋮」→「取得預先填寫的連結」，
-      或直接把表單網址的 /viewform 改成 /formResponse
-   3. 每個欄位的 entry.XXXXXXXXX 代碼，可以用「取得預先填寫的連結」功能，
-      在每個欄位填入一些文字後產生連結，網址上 entry.XXXXXXXXX= 前面那串數字就是了
-   4. 把下面的網址與 entry 代碼換成你自己表單的
+   二、後端設定 —— Google Apps Script Web App
+   訂單會用 fetch 直接 POST 到這個網址，由 Apps Script 寫入試算表並寄信通知。
+   如果之後重新部署 Apps Script 產生新的網址，記得回來換掉這裡。
    ===================================================================== */
-const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSd60UDWJ86_jyICvw6jESsnJGATHpViZV7HR-kjgmEAOD_wpw/formResponse';
-const ENTRY = {
-  name:     'entry.2040558002', // 角色名稱
-  server:   'entry.1865778989', // 所屬伺服器
-  order:    'entry.671881031',  // 訂購明細（自動產生的文字）
-  total:    'entry.1360352395', // 總金額
-  delivery: 'entry.1358977331', // 期望交貨日期
-  note:     'entry.1583351389', // 其他備註
-};
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXIfyuXzw-Y4NsUqgx0ALyhKz3lweJ8p--HU8t9uLnfUpK9hMf19ga-ukV5pIxOYiDIA/exec';
 
 /* ===================================================================== */
 
@@ -766,7 +751,7 @@ function generateManifestNo(){
 }
 
 /* ---------- 送出表單 ---------- */
-document.getElementById('order-form').addEventListener('submit', function(e){
+document.getElementById('order-form').addEventListener('submit', async function(e){
   e.preventDefault();
 
   const lines = buildOrderLines();
@@ -796,48 +781,45 @@ document.getElementById('order-form').addEventListener('submit', function(e){
     + `\n\n【備料統計】\n${formatPartsBreakdown()}`
     + `\n\n（聯絡方式：${contact}）`;
 
-  // 動態建立一個表單，POST 到 Google表單，並用隱藏 iframe 接收避免跳轉頁面
-  const gform = document.createElement('form');
-  gform.action = GOOGLE_FORM_ACTION;
-  gform.method = 'POST';
-  gform.target = 'hidden-submit-frame';
+  const submitBtn = document.getElementById('submit-btn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '送出中...';
 
-  const fields = {
-    [ENTRY.name]: name,
-    [ENTRY.server]: server,
-    [ENTRY.order]: orderText,
-    [ENTRY.total]: total,
-    [ENTRY.delivery]: delivery,
-    [ENTRY.note]: note,
-  };
-  for(const [key, val] of Object.entries(fields)){
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = key;
-    input.value = val;
-    gform.appendChild(input);
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ name, server, order: orderText, total, delivery, note })
+    });
+    const result = await res.json();
+
+    if(result.result !== 'success'){
+      throw new Error(result.message || '未知錯誤');
+    }
+
+    // 真正確認送出成功後，才顯示成功狀態與蓋章動畫
+    document.getElementById('stamp').classList.add('show');
+    showStatus('申請已送出，感謝訂購！請透過 Threads（@captain_foxliwei，或搜尋「糖狐蘆」）私訊告知我已送出訂單，我才會盡快確認～', 'ok');
+
+    setTimeout(()=>{
+      // 重置表單，方便下一筆訂購
+      state.parts = {};
+      state.combos = {};
+      document.querySelectorAll('.qty').forEach(el => el.textContent = '0');
+      document.querySelectorAll('.combo-card').forEach(el => el.classList.remove('has-qty'));
+      document.getElementById('order-form').reset();
+      submitBtn.disabled = false;
+      submitBtn.textContent = '送出申請';
+      document.getElementById('stamp').classList.remove('show');
+      generateManifestNo();
+      updateManifest();
+    }, 5500);
+
+  } catch(err){
+    // 送出失敗：明確告知客人，不要讓他們誤以為訂單已送達
+    showStatus('送出失敗，請檢查網路後重新按一次送出；如果重試仍失敗，麻煩直接透過 Threads 私訊我訂單內容。', 'err');
+    submitBtn.disabled = false;
+    submitBtn.textContent = '送出申請';
   }
-  document.body.appendChild(gform);
-  gform.submit();
-  document.body.removeChild(gform);
-
-  // 顯示成功狀態與蓋章動畫
-  document.getElementById('submit-btn').disabled = true;
-  document.getElementById('stamp').classList.add('show');
-  showStatus('申請已送出，感謝訂購！請透過 Threads（@captain_foxliwei，或搜尋「糖狐蘆」）私訊告知我已送出訂單，我才會盡快確認～', 'ok');
-
-  setTimeout(()=>{
-    // 重置表單，方便下一筆訂購
-    state.parts = {};
-    state.combos = {};
-    document.querySelectorAll('.qty').forEach(el => el.textContent = '0');
-    document.querySelectorAll('.combo-card').forEach(el => el.classList.remove('has-qty'));
-    document.getElementById('order-form').reset();
-    document.getElementById('submit-btn').disabled = false;
-    document.getElementById('stamp').classList.remove('show');
-    generateManifestNo();
-    updateManifest();
-  }, 5500);
 });
 
 function showStatus(msg, type){

@@ -291,12 +291,33 @@
     resize:vertical;
   }
   .field textarea{min-height:56px;}
-  .datetime-row{
-    display:flex;
-    gap:8px;
+  .slot-checks{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px 14px;
   }
-  .datetime-row input[type="date"]{flex:1.2;}
-  .datetime-row select{flex:1;}
+  .slot-checks label{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
+    color:#3A2E1E;
+    cursor:pointer;
+    padding:6px 8px;
+    border:1px solid rgba(58,46,30,0.2);
+    border-radius:4px;
+    background:rgba(255,255,255,0.35);
+    transition:background .15s, border-color .15s;
+  }
+  .slot-checks label:has(input:checked){
+    background:rgba(201,151,77,0.18);
+    border-color:var(--accent-brass-dim);
+  }
+  .slot-checks input{
+    width:15px;height:15px;
+    accent-color:#8C6B3B;
+    flex-shrink:0;
+  }
 
   .submit-btn{
     width:100%;
@@ -432,16 +453,19 @@
             </select>
           </div>
           <div class="field">
-            <label>期望交貨時間（限一個月內）</label>
-            <div class="datetime-row">
-              <input type="date" id="f-date" required>
-              <select id="f-slot" required>
-                <option value="" disabled selected>選擇時段</option>
-                <option value="12:00–14:00">12:00–14:00</option>
-                <option value="18:00–20:00">18:00–20:00</option>
-                <option value="20:00–22:00">20:00–22:00</option>
-                <option value="22:00–24:00">22:00–24:00</option>
-              </select>
+            <label>期望交貨日期（限一個月內）</label>
+            <input type="date" id="f-date" required>
+          </div>
+          <div class="field">
+            <label>可接受的交貨時段（可複選）</label>
+            <div class="slot-checks" id="slot-checks">
+              <label><input type="checkbox" class="slot-box" value="00:00–01:00">00:00–01:00</label>
+              <label><input type="checkbox" class="slot-box" value="10:00–12:00">10:00–12:00</label>
+              <label><input type="checkbox" class="slot-box" value="12:00–14:00">12:00–14:00</label>
+              <label><input type="checkbox" class="slot-box" value="14:00–16:00">14:00–16:00</label>
+              <label><input type="checkbox" class="slot-box" value="16:00–18:00">16:00–18:00</label>
+              <label><input type="checkbox" class="slot-box" value="20:00–22:00">20:00–22:00</label>
+              <label><input type="checkbox" class="slot-box" value="22:00–00:00">22:00–00:00</label>
             </div>
           </div>
           <div class="field">
@@ -670,13 +694,17 @@ document.getElementById('order-form').addEventListener('submit', function(e){
   const contact = document.getElementById('f-contact').value.trim();
   const server = document.getElementById('f-server').value.trim();
   const date = document.getElementById('f-date').value;
-  const slot = document.getElementById('f-slot').value;
   const dateInput = document.getElementById('f-date');
   if(date && (date < dateInput.min || date > dateInput.max)){
     showStatus('交貨日期請選擇一個月內的範圍', 'err');
     return;
   }
-  const delivery = date && slot ? `${date}　${slot}` : (date || slot);
+  const selectedSlots = Array.from(document.querySelectorAll('.slot-box:checked')).map(el => el.value);
+  if(selectedSlots.length === 0){
+    showStatus('請至少勾選一個可接受的交貨時段', 'err');
+    return;
+  }
+  const delivery = date ? `${date}　${selectedSlots.join('、')}` : selectedSlots.join('、');
   const note = document.getElementById('f-note').value.trim();
   const total = lines.reduce((sum,l)=>sum+l.subtotal,0);
   const orderText = lines.map(l => `${l.name}${l.qty>1?' x'+l.qty:''}（${fmt(l.subtotal)} Gil）`).join('\n')

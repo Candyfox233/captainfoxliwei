@@ -739,8 +739,10 @@ function updateManifest(){
   }
 
   // 深度計：以總金額換算一個視覺化的下潛深度感（純裝飾，非遊戲內數值）
-  const depthPercent = Math.min(100, total / 20); // 每 20 Gil 約 1% 高度，上限 100%
-  const depthMeters = Math.min(2000, total * 1.5);
+  // MAX_DEPTH_REFERENCE：總金額達到這個數字時視為「滿深度 2000m」，可依實際商品價格區間調整
+  const MAX_DEPTH_REFERENCE = 3000000;
+  const depthPercent = Math.min(100, (total / MAX_DEPTH_REFERENCE) * 100);
+  const depthMeters = Math.min(2000, (total / MAX_DEPTH_REFERENCE) * 2000);
   document.getElementById('depth-fill').style.height = depthPercent + '%';
   document.getElementById('depth-value').textContent = Math.round(depthMeters) + 'm';
 }

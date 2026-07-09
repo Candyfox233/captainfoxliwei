@@ -303,6 +303,11 @@
     margin-bottom:5px;
     letter-spacing:0.03em;
   }
+  .field-hint{
+    font-size:13px;
+    color:#9C3B3B;
+    margin-top:5px;
+  }
   .field input, .field textarea, .field select{
     width:100%;
     padding:9px 10px;
@@ -465,7 +470,7 @@
             <input type="text" id="f-name" required>
           </div>
           <div class="field">
-            <label>聯絡方式（Discord 帳號等）</label>
+            <label>聯絡方式（Threads帳號、Discord 帳號等）</label>
             <input type="text" id="f-contact" required>
           </div>
           <div class="field">
@@ -484,6 +489,7 @@
           <div class="field">
             <label>期望交貨日期（限一個月內）</label>
             <input type="date" id="f-date" required>
+            <div class="field-hint">※ 5組以上大量訂單請一週前預訂</div>
           </div>
           <div class="field">
             <label>可接受的交貨時段（可複選）</label>
@@ -818,7 +824,7 @@ document.getElementById('order-form').addEventListener('submit', function(e){
   // 顯示成功狀態與蓋章動畫
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('stamp').classList.add('show');
-  showStatus('申請已送出，感謝訂購！', 'ok');
+  showStatus('申請已送出，感謝訂購！請透過 Threads（@captain_foxliwei，或搜尋「糖狐蘆」）私訊告知我已送出訂單，我才會盡快確認～', 'ok');
 
   setTimeout(()=>{
     // 重置表單，方便下一筆訂購
@@ -831,7 +837,7 @@ document.getElementById('order-form').addEventListener('submit', function(e){
     document.getElementById('stamp').classList.remove('show');
     generateManifestNo();
     updateManifest();
-  }, 2600);
+  }, 5500);
 });
 
 function showStatus(msg, type){

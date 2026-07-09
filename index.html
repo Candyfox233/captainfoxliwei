@@ -432,7 +432,7 @@
             </select>
           </div>
           <div class="field">
-            <label>期望交貨時間</label>
+            <label>期望交貨時間（限一個月內）</label>
             <div class="datetime-row">
               <input type="date" id="f-date" required>
               <select id="f-slot" required>
@@ -671,6 +671,11 @@ document.getElementById('order-form').addEventListener('submit', function(e){
   const server = document.getElementById('f-server').value.trim();
   const date = document.getElementById('f-date').value;
   const slot = document.getElementById('f-slot').value;
+  const dateInput = document.getElementById('f-date');
+  if(date && (date < dateInput.min || date > dateInput.max)){
+    showStatus('交貨日期請選擇一個月內的範圍', 'err');
+    return;
+  }
   const delivery = date && slot ? `${date}　${slot}` : (date || slot);
   const note = document.getElementById('f-note').value.trim();
   const total = lines.reduce((sum,l)=>sum+l.subtotal,0);
@@ -733,7 +738,12 @@ generateManifestNo();
 updateManifest();
 
 // 交貨日期不能選今天以前
-document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
+// 交貨日期限制：只能選今天到一個月內
+const today = new Date();
+const oneMonthLater = new Date(today);
+oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+document.getElementById('f-date').min = today.toISOString().split('T')[0];
+document.getElementById('f-date').max = oneMonthLater.toISOString().split('T')[0];
 </script>
 </body>
 </html>

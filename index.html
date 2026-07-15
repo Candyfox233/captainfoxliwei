@@ -520,31 +520,38 @@
 <script>
 /* =====================================================================
    一、配件與套裝清單 —— 在這裡改成你自己販賣的品項與價格即可
+
+   價格浮動切換說明：
+   每個 price 都改成 { A: 一般價格, B: 浮動/尖峰價格 } 這種格式。
+   要切換全部價格，只要改下面 ACTIVE_PRICE 這一行就好（'A' 或 'B'），
+   不用一個一個去改每個品項的價格。
    ===================================================================== */
+const ACTIVE_PRICE = 'A'; // 改成 'A' 或 'B' 來切換全站價格
+
 const PARTS = [
   { category: '船體 Hull', items: [
-    { id:'1000', name:'鯊魚級船體',   price:200000 },
-    { id:'2000', name:'甲鱟級船體',   price:350000 },
-    { id:'3000', name:'鬚鯨級船體',   price:350000 },
-    { id:'4000', name:'腔棘魚級船體', price:550000 },
+    { id:'1000', name:'鯊魚級船體',   price:{A:200000, B:200000} },
+    { id:'2000', name:'甲鱟級船體',   price:{A:300000, B:350000} },
+    { id:'3000', name:'鬚鯨級船體',   price:{A:350000, B:350000} },
+    { id:'4000', name:'腔棘魚級船體', price:{A:550000, B:550000} },
   ]},
   { category: '船尾 Stern', items: [
-    { id:'0100', name:'鯊魚級船尾',     price:200000 },
-    { id:'0200', name:'甲鱟級船尾',     price:400000 },
-    { id:'0300', name:'鬚鯨級船尾',     price:450000 },
-    { id:'0400', name:'腔棘魚級船尾',   price:550000 },
+    { id:'0100', name:'鯊魚級船尾',     price:{A:200000, B:200000} },
+    { id:'0200', name:'甲鱟級船尾',     price:{A:400000, B:400000} },
+    { id:'0300', name:'鬚鯨級船尾',     price:{A:450000, B:450000} },
+    { id:'0400', name:'腔棘魚級船尾',   price:{A:550000, B:550000} },
   ]},
   { category: '船首 Bow', items: [
-    { id:'0010', name:'鯊魚級船首',    price:200000 },
-    { id:'0020', name:'甲鱟級船首',    price:350000 },
-    { id:'0030', name:'鬚鯨級船首',    price:300000 },
-    { id:'0040', name:'腔棘魚級船首',  price:550000 },
+    { id:'0010', name:'鯊魚級船首',    price:{A:200000, B:200000} },
+    { id:'0020', name:'甲鱟級船首',    price:{A:350000, B:350000} },
+    { id:'0030', name:'鬚鯨級船首',    price:{A:300000, B:300000} },
+    { id:'0040', name:'腔棘魚級船首',  price:{A:550000, B:550000} },
   ]},
   { category: '艦橋 Bridge', items: [
-    { id:'0001',name:'鯊魚級艦橋',   price:200000 },
-    { id:'0002',name:'甲鱟級艦橋',   price:320000 },
-    { id:'0003',name:'鬚鯨級艦橋',   price:450000 },
-    { id:'0004',name:'腔棘魚級艦橋', price:450000 },
+    { id:'0001',name:'鯊魚級艦橋',   price:{A:200000, B:200000} },
+    { id:'0002',name:'甲鱟級艦橋',   price:{A:320000, B:320000} },
+    { id:'0003',name:'鬚鯨級艦橋',   price:{A:450000, B:450000} },
+    { id:'0004',name:'腔棘魚級艦橋', price:{A:400000, B:450000} },
   ]},
 ];
 
@@ -552,31 +559,31 @@ const COMBOS = [
   {
     id:'1111',
     name:'初始套裝（1111）',
-    price:800000,
+    price:{A:800000, B:800000},
     includes:['鯊魚級船體','鯊魚級船尾','鯊魚級船首','鯊魚級艦橋']
   },
   {
     id:'1121',
     name:'15級後進階套裝（1121）',
-    price:950000,
+    price:{A:900000, B:950000},
     includes:['鯊魚級船體','鯊魚級船尾','甲鱟級船首','鯊魚級艦橋']
   },
   {
     id:'3003',
     name:'練等升級套裝（3003）',
-    price:800000,
+    price:{A:800000, B:800000},
     includes:['鬚鯨級船體','鬚鯨級艦橋']
   },
   {
     id:'3004',
     name:'撈金升級套裝（3004）',
-    price:800000,
+    price:{A:750000, B:800000},
     includes:['鬚鯨級船體','腔棘魚級艦橋']
   },
-    {
+  {
     id:'3124',
     name:'撈金畢業套裝（3124）',
-    price:1400000,
+    price:{A:1350000, B:1400000},
     includes:['鬚鯨級船體','鯊魚級船尾','甲鱟級船首','腔棘魚級艦橋']
   },
 ];
@@ -604,7 +611,7 @@ function renderParts(){
       ${cat.items.map(item => `
         <div class="part-row">
           <div class="part-name">${item.name}</div>
-          <div class="part-price">${fmt(item.price)} Gil</div>
+          <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
           <div class="stepper">
             <button type="button" onclick="changeQty('${item.id}',-1)">−</button>
             <div class="qty" id="qty-${item.id}">0</div>
@@ -623,7 +630,7 @@ function renderCombos(){
       <div class="combo-name">${c.name}</div>
       <div class="combo-includes">內含：${c.includes.join('、')}</div>
       <div class="combo-footer">
-        <div class="combo-price">${fmt(c.price)} Gil</div>
+        <div class="combo-price">${fmt(c.price[ACTIVE_PRICE])} Gil</div>
         <div class="stepper">
           <button type="button" onclick="changeComboQty('${c.id}',-1)">−</button>
           <div class="qty" id="qty-combo-${c.id}">0</div>
@@ -703,13 +710,13 @@ function buildOrderLines(){
   for(const [id, qty] of Object.entries(state.parts)){
     if(qty > 0){
       const part = findPart(id);
-      lines.push({ name:part.name, qty, subtotal: part.price * qty });
+      lines.push({ name:part.name, qty, subtotal: part.price[ACTIVE_PRICE] * qty });
     }
   }
   for(const combo of COMBOS){
     const qty = state.combos[combo.id] || 0;
     if(qty > 0){
-      lines.push({ name:combo.name, qty, subtotal: combo.price * qty });
+      lines.push({ name:combo.name, qty, subtotal: combo.price[ACTIVE_PRICE] * qty });
     }
   }
   return lines;

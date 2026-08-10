@@ -434,7 +434,7 @@
     <div class="eyebrow">Vulpes Submersible Works</div>
     <h1>狐狸潛艇造船廠</h1>
     <div class="sub">FF14繁中服，潛艇訂購服務</div>
-    <div class="seller-id">賣家所在World：利維坦<br>糖狐蘆　|　梨花醉<br>交易地點：利維坦 沙都 1線 乙太之光旁</div>
+    <div class="seller-id">賣家所在World：利維坦<br>糖狐蘆　|　梨花醉<br>交易地點：利維坦 沙都 乙太之光旁</div>
   </header>
 
   <div class="grid">
@@ -610,26 +610,63 @@ const COMBOS = [
 ];
 
 /* =====================================================================
-   改級潛艇 —— 4254改 / 5124改，各自區分「附骨架」跟「未附骨架」兩種價格
+   改級潛艇 —— 每項只要維護「提供骨架的價格」跟「對應的單體配件名稱」，
+   「未提供骨架」的價格會自動用公式算出來：
+   未提供骨架 = 提供骨架價格 + 對應單體配件價格 + REFORGE_SURCHARGE
+   basePart 要跟 PARTS 清單裡的 name 完全一致，才能正確對到單體價格。
    ===================================================================== */
-const REFORGED = [
-  { category: '改級潛艇', items: [
-    { id:'r-0004',   name:'腔棘魚改級船體（買家提供骨架）',   price:{A:850000, B:850000} },
-    { id:'r-0004-nohull', name:'腔棘魚改級船體（買家未提供骨架）', price:{A:1230000, B:1230000} },
-    { id:'r-5000',   name:'希爾德拉改級船體（買家提供骨架）',   price:{A:900000, B:900000} },
-    { id:'r-5000-nohull', name:'希爾德拉改級船體（買家未提供骨架）', price:{A:1770000, B:1770000} },
-    { id:'r-0200',   name:'甲鱟改級船尾（買家提供骨架）',   price:{A:1250000, B:1250000} },
-    { id:'r-0200-nohull', name:'甲鱟改級船尾（買家未提供骨架）', price:{A:1770000, B:1770000} },
-    { id:'r-0100',   name:'鯊魚改級船尾（買家提供骨架）',   price:{A:880000, B:900000} },
-    { id:'r-0100-nohull', name:'鯊魚改級船尾（買家未提供骨架））', price:{A:1100000, B:1100000} }, 
-    { id:'r-0020',   name:'甲鱟改級船首（買家提供骨架）',   price:{A:1250000, B:1250000} },
-    { id:'r-0020-nohull', name:'甲鱟改級船首（買家未提供骨架）', price:{A:1620000, B:1620000} },  
-    { id:'r-0050',   name:'希爾德拉改級船首（買家提供骨架）',   price:{A:800000, B:800000} },
-    { id:'r-0050-nohull', name:'希爾德拉改級船首（買家未提供骨架）', price:{A:1720000, B:1720000} }, 
-    { id:'r-0004',   name:'腔棘魚改級艦橋（買家提供骨架）',   price:{A:850000, B:850000} },
-    { id:'r-0004-nohull', name:'腔棘魚改級艦橋（買家未提供骨架）', price:{A:1320000, B:1320000} }, 
-  ]},
+const REFORGE_SURCHARGE = 20000;
+
+const REFORGED_BASE = [
+  { id:'r-4000', name:'腔棘魚改級船體',   hullPrice:{A:850000, B:850000},   basePart:'腔棘魚級船體' },
+  { id:'r-5000', name:'希爾德拉改級船體', hullPrice:{A:900000, B:900000},   basePart:'希爾德拉級船體' },
+  { id:'r-0200', name:'甲鱟改級船尾',     hullPrice:{A:1250000, B:1250000}, basePart:'甲鱟級船尾' },
+  { id:'r-0100', name:'鯊魚改級船尾',     hullPrice:{A:880000, B:900000},   basePart:'鯊魚級船尾' },
+  { id:'r-0020', name:'甲鱟改級船首',     hullPrice:{A:1250000, B:1250000}, basePart:'甲鱟級船首' },
+  { id:'r-0050', name:'希爾德拉改級船首', hullPrice:{A:800000, B:800000},   basePart:'希爾德拉級船首' },
+  { id:'r-0004b',name:'腔棘魚改級艦橋',   hullPrice:{A:850000, B:850000},   basePart:'腔棘魚級艦橋' },
 ];
+
+function findPartByName(name){
+  for(const cat of PARTS){
+    const found = cat.items.find(i => i.name === name);
+    if(found) return found;
+  }
+  return null;
+}
+
+function buildReforgedCatalog(){
+  const hullItems = [];
+  const nohullItems = [];
+  for(const entry of REFORGED_BASE){
+    const basePart = findPartByName(entry.basePart);
+    if(!basePart){
+      console.warn(`REFORGED_BASE 裡的 basePart「${entry.basePart}」在 PARTS 清單裡找不到，請檢查名稱是否打錯字`);
+      continue;
+    }
+    hullItems.push({
+      id: entry.id,
+      name: `${entry.name}（買家提供骨架）`,
+      shortLabel: entry.name,
+      price: { A: entry.hullPrice.A, B: entry.hullPrice.B }
+    });
+    nohullItems.push({
+      id: `${entry.id}-nohull`,
+      name: `${entry.name}（買家未提供骨架）`,
+      shortLabel: entry.name,
+      price: {
+        A: entry.hullPrice.A + basePart.price.A + REFORGE_SURCHARGE,
+        B: entry.hullPrice.B + basePart.price.B + REFORGE_SURCHARGE
+      }
+    });
+  }
+  return [
+    { category: '買家提供骨架', items: hullItems },
+    { category: '買家未提供骨架', items: nohullItems },
+  ];
+}
+
+const REFORGED = buildReforgedCatalog();
 
 /* =====================================================================
    工坊材料 / 桶裝青磷水
@@ -747,10 +784,11 @@ function findPart(id){
 function renderReforged(){
   const wrap = document.getElementById('reforged-container');
   wrap.innerHTML = REFORGED.map(cat => `
+    <div class="section-title" style="margin-top:22px;font-size:13px;">${cat.category}</div>
     <div class="category-block">
       ${cat.items.map(item => `
         <div class="part-row">
-          <div class="part-name">${item.name}</div>
+          <div class="part-name">${item.shortLabel || item.name}</div>
           <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
           <div class="stepper">
             <button type="button" onclick="changeReforgedQty('${item.id}',-1)">−</button>

@@ -148,11 +148,24 @@
   }
   .stepper button:hover{background:rgba(201,151,77,0.15);}
   .stepper .qty{
-    width:26px;
+    width:30px;
     text-align:center;
     font-family:'Cinzel',serif;
     font-size:14px;
     color:var(--ink-parchment);
+    background:transparent;
+    border:none;
+    padding:0;
+    -moz-appearance:textfield;
+  }
+  .stepper .qty::-webkit-outer-spin-button,
+  .stepper .qty::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .stepper .qty:focus{
+    outline:1px solid var(--accent-brass-dim);
+    border-radius:3px;
   }
 
   /* ---------- Combo cards ---------- */
@@ -624,10 +637,12 @@ const REFORGED = [
    ===================================================================== */
 const MATERIALS = [
   { category: '工坊材料 / 青磷水', items: [
-    { id:'mat-scrap',     name:'輕木廢材',           price:{A:3000, B:3000} },
-    { id:'mat-lumber',    name:'輕木木材',           price:{A:5000, B:5000} },
-    { id:'mat-sandal',    name:'黃檀木材',           price:{A:10000, B:10000} },
-    { id:'mat-water999',  name:'桶裝青磷水（999個一組）', price:{A:50000, B:50000} },
+    { id:'bamboo-weave',     name:'竹片',           price:{A:0, B:0}, max:40 },
+    { id:'balsa-wood-wcrap',     name:'輕木廢材',           price:{A:3000, B:3000}, max:40 },
+    { id:'balsa-wood-lumber',    name:'輕木木材',           price:{A:5000, B:5000}, max:40 },
+    { id:'synthetic-fiber',    name:'煉金纖維',           price:{A:5000, B:5000}, max:40 },
+    { id:'cocobolo-lumber',    name:'黃檀木材',           price:{A:10000, B:10000}, max:40 },
+    { id:'ceruleum-tank999',  name:'桶裝青磷水（999個一組）', price:{A:50000, B:50000}, max:5 },
   ]},
 ];
 
@@ -657,7 +672,7 @@ function renderParts(){
           <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
           <div class="stepper">
             <button type="button" onclick="changeQty('${item.id}',-1)">−</button>
-            <div class="qty" id="qty-${item.id}">0</div>
+            <input type="number" class="qty" id="qty-${item.id}" value="0" min="0" max="20" inputmode="numeric" onchange="setQty('${item.id}', this.value)">
             <button type="button" onclick="changeQty('${item.id}',1)">+</button>
           </div>
         </div>
@@ -676,7 +691,7 @@ function renderCombos(){
         <div class="combo-price">${fmt(c.price[ACTIVE_PRICE])} Gil</div>
         <div class="stepper">
           <button type="button" onclick="changeComboQty('${c.id}',-1)">−</button>
-          <div class="qty" id="qty-combo-${c.id}">0</div>
+          <input type="number" class="qty" id="qty-combo-${c.id}" value="0" min="0" max="20" inputmode="numeric" onchange="setComboQty('${c.id}', this.value)">
           <button type="button" onclick="changeComboQty('${c.id}',1)">+</button>
         </div>
       </div>
@@ -688,7 +703,16 @@ function changeQty(id, delta){
   const current = state.parts[id] || 0;
   const next = Math.max(0, Math.min(20, current + delta));
   state.parts[id] = next;
-  document.getElementById(`qty-${id}`).textContent = next;
+  document.getElementById(`qty-${id}`).value = next;
+  updateManifest();
+}
+
+function setQty(id, rawValue){
+  const parsed = Math.floor(Number(rawValue));
+  const safe = Number.isFinite(parsed) ? parsed : 0;
+  const next = Math.max(0, Math.min(20, safe));
+  state.parts[id] = next;
+  document.getElementById(`qty-${id}`).value = next;
   updateManifest();
 }
 
@@ -696,7 +720,17 @@ function changeComboQty(id, delta){
   const current = state.combos[id] || 0;
   const next = Math.max(0, Math.min(20, current + delta));
   state.combos[id] = next;
-  document.getElementById(`qty-combo-${id}`).textContent = next;
+  document.getElementById(`qty-combo-${id}`).value = next;
+  document.getElementById(`combo-${id}`).classList.toggle('has-qty', next > 0);
+  updateManifest();
+}
+
+function setComboQty(id, rawValue){
+  const parsed = Math.floor(Number(rawValue));
+  const safe = Number.isFinite(parsed) ? parsed : 0;
+  const next = Math.max(0, Math.min(20, safe));
+  state.combos[id] = next;
+  document.getElementById(`qty-combo-${id}`).value = next;
   document.getElementById(`combo-${id}`).classList.toggle('has-qty', next > 0);
   updateManifest();
 }
@@ -720,7 +754,7 @@ function renderReforged(){
           <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
           <div class="stepper">
             <button type="button" onclick="changeReforgedQty('${item.id}',-1)">−</button>
-            <div class="qty" id="qty-${item.id}">0</div>
+            <input type="number" class="qty" id="qty-${item.id}" value="0" min="0" max="4" inputmode="numeric" onchange="setReforgedQty('${item.id}', this.value)">
             <button type="button" onclick="changeReforgedQty('${item.id}',1)">+</button>
           </div>
         </div>
@@ -731,9 +765,18 @@ function renderReforged(){
 
 function changeReforgedQty(id, delta){
   const current = state.reforged[id] || 0;
-  const next = Math.max(0, Math.min(20, current + delta));
+  const next = Math.max(0, Math.min(4, current + delta));
   state.reforged[id] = next;
-  document.getElementById(`qty-${id}`).textContent = next;
+  document.getElementById(`qty-${id}`).value = next;
+  updateManifest();
+}
+
+function setReforgedQty(id, rawValue){
+  const parsed = Math.floor(Number(rawValue));
+  const safe = Number.isFinite(parsed) ? parsed : 0;
+  const next = Math.max(0, Math.min(4, safe));
+  state.reforged[id] = next;
+  document.getElementById(`qty-${id}`).value = next;
   updateManifest();
 }
 
@@ -756,7 +799,7 @@ function renderMaterials(){
           <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
           <div class="stepper">
             <button type="button" onclick="changeMaterialQty('${item.id}',-1)">−</button>
-            <div class="qty" id="qty-${item.id}">0</div>
+            <input type="number" class="qty" id="qty-${item.id}" value="0" min="0" max="${item.max || 40}" inputmode="numeric" onchange="setMaterialQty('${item.id}', this.value)">
             <button type="button" onclick="changeMaterialQty('${item.id}',1)">+</button>
           </div>
         </div>
@@ -766,10 +809,23 @@ function renderMaterials(){
 }
 
 function changeMaterialQty(id, delta){
+  const item = findMaterial(id);
+  const cap = item.max || 40;
   const current = state.materials[id] || 0;
-  const next = Math.max(0, Math.min(20, current + delta));
+  const next = Math.max(0, Math.min(cap, current + delta));
   state.materials[id] = next;
-  document.getElementById(`qty-${id}`).textContent = next;
+  document.getElementById(`qty-${id}`).value = next;
+  updateManifest();
+}
+
+function setMaterialQty(id, rawValue){
+  const item = findMaterial(id);
+  const cap = item.max || 40;
+  const parsed = Math.floor(Number(rawValue));
+  const safe = Number.isFinite(parsed) ? parsed : 0;
+  const next = Math.max(0, Math.min(cap, safe));
+  state.materials[id] = next;
+  document.getElementById(`qty-${id}`).value = next;
   updateManifest();
 }
 
@@ -948,7 +1004,7 @@ document.getElementById('order-form').addEventListener('submit', async function(
       state.combos = {};
       state.reforged = {};
       state.materials = {};
-      document.querySelectorAll('.qty').forEach(el => el.textContent = '0');
+      document.querySelectorAll('.qty').forEach(el => el.value = '0');
       document.querySelectorAll('.combo-card').forEach(el => el.classList.remove('has-qty'));
       document.getElementById('order-form').reset();
       submitBtn.disabled = false;

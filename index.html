@@ -432,6 +432,12 @@
 
       <div class="section-title">單項配件</div>
       <div id="parts-container"></div>
+
+      <div class="section-title">改級潛艇</div>
+      <div id="reforged-container"></div>
+
+      <div class="section-title">工坊材料 / 青磷水</div>
+      <div id="materials-container"></div>
     </div>
 
     <!-- ============ RIGHT: 訂單申請單 ============ -->
@@ -533,11 +539,12 @@ const PARTS = [
     { id:'1000', name:'鯊魚級船體',   price:{A:200000, B:200000} },
     { id:'2000', name:'甲鱟級船體',   price:{A:300000, B:350000} },
     { id:'3000', name:'鬚鯨級船體',   price:{A:400000, B:400000} },
-    { id:'4000', name:'腔棘魚級船體', price:{A:550000, B:550000} },
+    { id:'4000', name:'腔棘魚級船體', price:{A:360000, B:380000} },
+    { id:'5000', name:'希爾德拉級船體', price:{A:850000, B:850000} },
   ]},
   { category: '船尾 Stern', items: [
     { id:'0100', name:'鯊魚級船尾',     price:{A:200000, B:200000} },
-    { id:'0200', name:'甲鱟級船尾',     price:{A:400000, B:450000} },
+    { id:'0200', name:'甲鱟級船尾',     price:{A:320000, B:370000} },
     { id:'0300', name:'鬚鯨級船尾',     price:{A:450000, B:500000} },
     { id:'0400', name:'腔棘魚級船尾',   price:{A:550000, B:600000} },
   ]},
@@ -546,6 +553,7 @@ const PARTS = [
     { id:'0020', name:'甲鱟級船首',    price:{A:350000, B:400000} },
     { id:'0030', name:'鬚鯨級船首',    price:{A:300000, B:350000} },
     { id:'0040', name:'腔棘魚級船首',  price:{A:550000, B:600000} },
+    { id:'0050', name:'希爾德拉級船首',  price:{A:900000, B:900000} },
   ]},
   { category: '艦橋 Bridge', items: [
     { id:'0001',name:'鯊魚級艦橋',   price:{A:200000, B:200000} },
@@ -589,6 +597,41 @@ const COMBOS = [
 ];
 
 /* =====================================================================
+   改級潛艇 —— 4254改 / 5124改，各自區分「附骨架」跟「未附骨架」兩種價格
+   ===================================================================== */
+const REFORGED = [
+  { category: '改級潛艇', items: [
+    { id:'r-0004',   name:'腔棘魚改級船體（買家提供骨架）',   price:{A:850000, B:850000} },
+    { id:'r-0004-nohull', name:'腔棘魚改級船體（買家未提供骨架）', price:{A:1230000, B:1230000} },
+    { id:'r-5000',   name:'希爾德拉改級船體（買家提供骨架）',   price:{A:900000, B:900000} },
+    { id:'r-5000-nohull', name:'希爾德拉改級船體（買家未提供骨架）', price:{A:1770000, B:1770000} },
+    { id:'r-0200',   name:'甲鱟改級船尾（買家提供骨架）',   price:{A:1250000, B:1250000} },
+    { id:'r-0200-nohull', name:'甲鱟改級船尾（買家未提供骨架）', price:{A:1770000, B:1770000} },
+    { id:'r-0100',   name:'鯊魚改級船尾（買家提供骨架）',   price:{A:880000, B:900000} },
+    { id:'r-0100-nohull', name:'鯊魚改級船尾（買家未提供骨架））', price:{A:1100000, B:1100000} }, 
+    { id:'r-0020',   name:'甲鱟改級船首（買家提供骨架）',   price:{A:1250000, B:1250000} },
+    { id:'r-0020-nohull', name:'甲鱟改級船首（買家未提供骨架）', price:{A:1620000, B:1620000} },  
+    { id:'r-0050',   name:'希爾德拉改級船首（買家提供骨架）',   price:{A:800000, B:800000} },
+    { id:'r-0050-nohull', name:'希爾德拉改級船首（買家未提供骨架）', price:{A:1720000, B:1720000} }, 
+    { id:'r-0004',   name:'腔棘魚改級艦橋（買家提供骨架）',   price:{A:850000, B:850000} },
+    { id:'r-0004-nohull', name:'腔棘魚改級艦橋（買家未提供骨架）', price:{A:1320000, B:1320000} }, 
+  ]},
+];
+
+/* =====================================================================
+   工坊材料 / 桶裝青磷水
+   （價格是我先隨便抓的，記得改成你自己的實際報價）
+   ===================================================================== */
+const MATERIALS = [
+  { category: '工坊材料 / 青磷水', items: [
+    { id:'mat-scrap',     name:'輕木廢材',           price:{A:3000, B:3000} },
+    { id:'mat-lumber',    name:'輕木木材',           price:{A:5000, B:5000} },
+    { id:'mat-sandal',    name:'黃檀木材',           price:{A:10000, B:10000} },
+    { id:'mat-water999',  name:'桶裝青磷水（999個一組）', price:{A:50000, B:50000} },
+  ]},
+];
+
+/* =====================================================================
    二、後端設定 —— Google Apps Script Web App
    訂單會用 fetch 直接 POST 到這個網址，由 Apps Script 寫入試算表並寄信通知。
    如果之後重新部署 Apps Script 產生新的網址，記得回來換掉這裡。
@@ -597,7 +640,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5-2DBV-Yd09KE
 
 /* ===================================================================== */
 
-const state = { parts:{}, combos:{} };
+const state = { parts:{}, combos:{}, reforged:{}, materials:{} };
 
 function fmt(n){
   return n.toLocaleString();
@@ -666,6 +709,78 @@ function findPart(id){
   return null;
 }
 
+/* ---------- 改級潛艇 ---------- */
+function renderReforged(){
+  const wrap = document.getElementById('reforged-container');
+  wrap.innerHTML = REFORGED.map(cat => `
+    <div class="category-block">
+      ${cat.items.map(item => `
+        <div class="part-row">
+          <div class="part-name">${item.name}</div>
+          <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
+          <div class="stepper">
+            <button type="button" onclick="changeReforgedQty('${item.id}',-1)">−</button>
+            <div class="qty" id="qty-${item.id}">0</div>
+            <button type="button" onclick="changeReforgedQty('${item.id}',1)">+</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function changeReforgedQty(id, delta){
+  const current = state.reforged[id] || 0;
+  const next = Math.max(0, Math.min(20, current + delta));
+  state.reforged[id] = next;
+  document.getElementById(`qty-${id}`).textContent = next;
+  updateManifest();
+}
+
+function findReforged(id){
+  for(const cat of REFORGED){
+    const found = cat.items.find(i=>i.id===id);
+    if(found) return found;
+  }
+  return null;
+}
+
+/* ---------- 工坊材料 / 青磷水 ---------- */
+function renderMaterials(){
+  const wrap = document.getElementById('materials-container');
+  wrap.innerHTML = MATERIALS.map(cat => `
+    <div class="category-block">
+      ${cat.items.map(item => `
+        <div class="part-row">
+          <div class="part-name">${item.name}</div>
+          <div class="part-price">${fmt(item.price[ACTIVE_PRICE])} Gil</div>
+          <div class="stepper">
+            <button type="button" onclick="changeMaterialQty('${item.id}',-1)">−</button>
+            <div class="qty" id="qty-${item.id}">0</div>
+            <button type="button" onclick="changeMaterialQty('${item.id}',1)">+</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function changeMaterialQty(id, delta){
+  const current = state.materials[id] || 0;
+  const next = Math.max(0, Math.min(20, current + delta));
+  state.materials[id] = next;
+  document.getElementById(`qty-${id}`).textContent = next;
+  updateManifest();
+}
+
+function findMaterial(id){
+  for(const cat of MATERIALS){
+    const found = cat.items.find(i=>i.id===id);
+    if(found) return found;
+  }
+  return null;
+}
+
 function buildPartsBreakdown(){
   const counts = {}; // 配件名稱 -> 總數量
 
@@ -717,6 +832,18 @@ function buildOrderLines(){
     const qty = state.combos[combo.id] || 0;
     if(qty > 0){
       lines.push({ name:combo.name, qty, subtotal: combo.price[ACTIVE_PRICE] * qty });
+    }
+  }
+  for(const [id, qty] of Object.entries(state.reforged)){
+    if(qty > 0){
+      const item = findReforged(id);
+      lines.push({ name:item.name, qty, subtotal: item.price[ACTIVE_PRICE] * qty });
+    }
+  }
+  for(const [id, qty] of Object.entries(state.materials)){
+    if(qty > 0){
+      const item = findMaterial(id);
+      lines.push({ name:item.name, qty, subtotal: item.price[ACTIVE_PRICE] * qty });
     }
   }
   return lines;
@@ -819,6 +946,8 @@ document.getElementById('order-form').addEventListener('submit', async function(
       // 重置表單，方便下一筆訂購
       state.parts = {};
       state.combos = {};
+      state.reforged = {};
+      state.materials = {};
       document.querySelectorAll('.qty').forEach(el => el.textContent = '0');
       document.querySelectorAll('.combo-card').forEach(el => el.classList.remove('has-qty'));
       document.getElementById('order-form').reset();
@@ -845,6 +974,8 @@ function showStatus(msg, type){
 
 renderParts();
 renderCombos();
+renderReforged();
+renderMaterials();
 generateManifestNo();
 updateManifest();
 

@@ -309,6 +309,14 @@
   .total-row .value{font-family:'Cinzel',serif;font-size:22px;font-weight:700;}
 
   .field{margin-bottom:12px;}
+  .honeypot-field{
+    position:absolute;
+    left:-9999px;
+    top:-9999px;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+  }
   .field label{
     display:block;
     font-size:12px;
@@ -484,6 +492,11 @@
         </div>
 
         <form id="order-form">
+          <!-- 隱形陷阱欄位：正常人看不到也不會填，機器人程式通常會把它一起填掉 -->
+          <div class="honeypot-field" aria-hidden="true">
+            <label for="f-hp">如果你是人類，請不要填寫這個欄位</label>
+            <input type="text" id="f-hp" name="website" tabindex="-1" autocomplete="off">
+          </div>
           <div class="field">
             <label>角色名稱</label>
             <input type="text" id="f-name" required>
@@ -989,6 +1002,18 @@ function generateManifestNo(){
 /* ---------- 送出表單 ---------- */
 document.getElementById('order-form').addEventListener('submit', async function(e){
   e.preventDefault();
+
+  // 機器人陷阱：這個欄位正常人看不到，只有自動填表的機器人才會填
+  // 有值就直接假裝送出成功，不真的打到後端，也不讓對方知道被擋下來
+  if(document.getElementById('f-hp').value.trim() !== ''){
+    document.getElementById('stamp').classList.add('show');
+    showStatus('申請已送出，感謝訂購！', 'ok');
+    setTimeout(()=>{
+      document.getElementById('order-form').reset();
+      document.getElementById('stamp').classList.remove('show');
+    }, 3000);
+    return;
+  }
 
   const lines = buildOrderLines();
   if(lines.length === 0){

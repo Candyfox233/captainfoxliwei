@@ -701,7 +701,7 @@ const MATERIALS = [
    訂單會用 fetch 直接 POST 到這個網址，由 Apps Script 寫入試算表並寄信通知。
    如果之後重新部署 Apps Script 產生新的網址，記得回來換掉這裡。
    ===================================================================== */
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5-2DBV-Yd09KEkdNfjVD_mqLmK-tUVabi4Aw_eDcnEGpfFCQIb0JdVS2q0E7dlPbfYQ/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXIfyuXzw-Y4NsUqgx0ALyhKz3lweJ8p--HU8t9uLnfUpK9hMf19ga-ukV5pIxOYiDIA/exec';
 
 /* ===================================================================== */
 
@@ -1038,8 +1038,9 @@ document.getElementById('order-form').addEventListener('submit', async function(
   const delivery = date ? `${date}　${selectedSlots.join('、')}` : selectedSlots.join('、');
   const note = document.getElementById('f-note').value.trim();
   const total = lines.reduce((sum,l)=>sum+l.subtotal,0);
+  const breakdownText = formatPartsBreakdown();
   const orderText = lines.map(l => `${l.name}${l.qty>1?' x'+l.qty:''}（${fmt(l.subtotal)} Gil）`).join('\n')
-    + `\n\n【備料統計】\n${formatPartsBreakdown()}`
+    + (breakdownText ? `\n\n【備料統計】\n${breakdownText}` : '')
     + `\n\n（聯絡方式：${contact}）`;
 
   const submitBtn = document.getElementById('submit-btn');

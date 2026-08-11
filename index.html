@@ -909,9 +909,45 @@ function buildPartsBreakdown(){
     }
   }
 
+  // 改級潛艇：直接用品項全名列入（名稱本身就有標註有沒有提供骨架）
+  for(const cat of REFORGED){
+    for(const item of cat.items){
+      const qty = state.reforged[item.id] || 0;
+      if(qty > 0){
+        counts[item.name] = (counts[item.name] || 0) + qty;
+      }
+    }
+  }
+
+  // 工坊材料 / 青磷水：一樣直接用品項名稱列入
+  for(const cat of MATERIALS){
+    for(const item of cat.items){
+      const qty = state.materials[item.id] || 0;
+      if(qty > 0){
+        counts[item.name] = (counts[item.name] || 0) + qty;
+      }
+    }
+  }
+
   // 依 PARTS 原本的分類順序輸出，順序穩定好對照
   const lines = [];
   for(const cat of PARTS){
+    for(const item of cat.items){
+      if(counts[item.name]){
+        lines.push({ name:item.name, qty:counts[item.name] });
+      }
+    }
+  }
+  // 改級潛艇也一起輸出（維持穩定順序：提供骨架 → 未提供骨架）
+  for(const cat of REFORGED){
+    for(const item of cat.items){
+      if(counts[item.name]){
+        lines.push({ name:item.name, qty:counts[item.name] });
+      }
+    }
+  }
+  // 工坊材料 / 青磷水也一起輸出
+  for(const cat of MATERIALS){
     for(const item of cat.items){
       if(counts[item.name]){
         lines.push({ name:item.name, qty:counts[item.name] });

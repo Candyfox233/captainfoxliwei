@@ -960,7 +960,7 @@ function buildPartsBreakdown(){
 function formatPartsBreakdown(){
   const lines = buildPartsBreakdown();
   if(lines.length === 0) return '';
-  return lines.map(l => `${l.name}×${l.qty}`).join('　');
+  return lines.map(l => `${l.name}×${l.qty}`).join('\n');
 }
 
 function buildOrderLines(){

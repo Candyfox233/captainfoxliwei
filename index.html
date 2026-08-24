@@ -712,6 +712,8 @@ function buildReforgedCatalog(){
   const materialCost = computeReforgeMaterialCost();
   const hullItems = [];
   const nohullItems = [];
+  // 無條件進位到萬位（例如 1,933,740 → 1,940,000）
+  const roundUpToWan = (n) => Math.ceil(n / 10000) * 10000;
   for(const entry of REFORGED_BASE){
     const basePart = findPartByName(entry.basePart);
     if(!basePart){
@@ -719,8 +721,8 @@ function buildReforgedCatalog(){
       continue;
     }
     const hullPrice = {
-      A: materialCost + entry.extraCost.A,
-      B: materialCost + entry.extraCost.B
+      A: roundUpToWan(materialCost + entry.extraCost.A),
+      B: roundUpToWan(materialCost + entry.extraCost.B)
     };
     hullItems.push({
       id: entry.id,
@@ -733,8 +735,8 @@ function buildReforgedCatalog(){
       name: `${entry.name}（買家未提供骨架）`,
       shortLabel: entry.name,
       price: {
-        A: hullPrice.A + basePart.price.A + REFORGE_SURCHARGE,
-        B: hullPrice.B + basePart.price.B + REFORGE_SURCHARGE
+        A: roundUpToWan(hullPrice.A + basePart.price.A + REFORGE_SURCHARGE),
+        B: roundUpToWan(hullPrice.B + basePart.price.B + REFORGE_SURCHARGE)
       }
     });
   }

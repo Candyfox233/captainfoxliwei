@@ -681,11 +681,6 @@ const RAW_MATERIAL_PRICE = {
 const REFORGE_MARKUP = 1.5; // 用料成本的加價倍率（成本 × 1.5）
 const REFORGE_SURCHARGE = 20000;
 
-// 用料成本＝ 27個柳杉原木 + 27個純鈦礦（每項改級共通），乘上加價倍率
-const REFORGE_MATERIAL_COST = Math.round(
-  (27 * RAW_MATERIAL_PRICE.cedarLog + 27 * RAW_MATERIAL_PRICE.titaniumOre) * REFORGE_MARKUP
-);
-
 const REFORGED_BASE = [
   { id:'r-4000', name:'腔棘魚改級船體',   extraCost:{A:283000, B:283000}, basePart:'腔棘魚級船體' },
   { id:'r-5000', name:'希爾德拉改級船體', extraCost:{A:333000, B:333000}, basePart:'希爾德拉級船體' },
@@ -704,7 +699,17 @@ function findPartByName(name){
   return null;
 }
 
+// 用料成本＝ 27個柳杉原木 + 27個純鈦礦（每項改級共通），乘上加價倍率
+// 寫成函式、每次呼叫都重新計算，這樣 RAW_MATERIAL_PRICE 被即時價格更新後，
+// 呼叫 buildReforgedCatalog() 才會真的套用到最新的原料價格。
+function computeReforgeMaterialCost(){
+  return Math.round(
+    (27 * RAW_MATERIAL_PRICE.cedarLog + 27 * RAW_MATERIAL_PRICE.titaniumOre) * REFORGE_MARKUP
+  );
+}
+
 function buildReforgedCatalog(){
+  const materialCost = computeReforgeMaterialCost();
   const hullItems = [];
   const nohullItems = [];
   for(const entry of REFORGED_BASE){
@@ -714,8 +719,8 @@ function buildReforgedCatalog(){
       continue;
     }
     const hullPrice = {
-      A: REFORGE_MATERIAL_COST + entry.extraCost.A,
-      B: REFORGE_MATERIAL_COST + entry.extraCost.B
+      A: materialCost + entry.extraCost.A,
+      B: materialCost + entry.extraCost.B
     };
     hullItems.push({
       id: entry.id,

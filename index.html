@@ -102,6 +102,34 @@
     background:var(--line);
   }
 
+  /* ---------- Tabs ---------- */
+  .tab-bar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:0;
+  }
+  .tab-btn{
+    font-family:'Noto Serif TC',serif;
+    font-size:14px;
+    letter-spacing:0.03em;
+    color:var(--text-dim);
+    background:transparent;
+    border:none;
+    border-bottom:2px solid transparent;
+    padding:10px 14px;
+    cursor:pointer;
+    transition:color .15s, border-color .15s;
+  }
+  .tab-btn:hover{color:var(--ink-parchment);}
+  .tab-btn.active{
+    color:var(--accent-brass);
+    border-bottom-color:var(--accent-brass);
+  }
+  .tab-panel .section-title:first-child{margin-top:0;}
+
   /* ---------- Part rows ---------- */
   .category-block{
     background:var(--bg-panel);
@@ -448,17 +476,25 @@
   <div class="grid">
     <!-- ============ LEFT: 目錄 ============ -->
     <div>
-      <div class="section-title">整組套裝</div>
-      <div class="combo-grid" id="combo-container"></div>
+      <div class="tab-bar" id="tab-bar">
+        <button type="button" class="tab-btn active" data-tab="combos">整組套裝</button>
+        <button type="button" class="tab-btn" data-tab="parts">單項配件</button>
+        <button type="button" class="tab-btn" data-tab="reforged">改級潛艇</button>
+        <button type="button" class="tab-btn" data-tab="materials">工坊材料 / 青磷水</button>
+      </div>
 
-      <div class="section-title">單項配件</div>
-      <div id="parts-container"></div>
-
-      <div class="section-title">改級潛艇</div>
-      <div id="reforged-container"></div>
-
-      <div class="section-title">工坊材料 / 青磷水</div>
-      <div id="materials-container"></div>
+      <div class="tab-panel" id="tab-combos">
+        <div class="combo-grid" id="combo-container"></div>
+      </div>
+      <div class="tab-panel" id="tab-parts" style="display:none;">
+        <div id="parts-container"></div>
+      </div>
+      <div class="tab-panel" id="tab-reforged" style="display:none;">
+        <div id="reforged-container"></div>
+      </div>
+      <div class="tab-panel" id="tab-materials" style="display:none;">
+        <div id="materials-container"></div>
+      </div>
     </div>
 
     <!-- ============ RIGHT: 訂單申請單 ============ -->
@@ -623,21 +659,41 @@ const COMBOS = [
 ];
 
 /* =====================================================================
-   改級潛艇 —— 每項只要維護「提供骨架的價格」跟「對應的單體配件名稱」，
-   「未提供骨架」的價格會自動用公式算出來：
-   未提供骨架 = 提供骨架價格 + 對應單體配件價格 + REFORGE_SURCHARGE
+   改級潛艇 —— 每項改級都需要用到「9個柳杉木材（=27個柳杉原木+81個樹汁塊）」
+   跟「9個純鈦板（=27個純鈦礦+81個焦炭）」，這部分用料成本共通。
+
+   價格拆成兩部分：
+   1. 用料成本：27×柳杉原木價格 + 27×純鈦礦價格，再乘上加價倍率
+      （樹汁塊、焦炭視為自產無成本，沒有算進去；如果之後想算，
+      在 RAW_MATERIAL_PRICE 裡加欄位、下面公式一起加上去即可）
+      → 改下面 RAW_MATERIAL_PRICE 裡的兩個數字，全部改級品項的價格會一起連動
+   2. 額外成本：每個品項各自不同（工時、稀有素材等），在 REFORGED_BASE
+      裡各自的 extraCost 設定，不受用料成本調整影響
+
+   提供骨架價格 = 用料成本 + 額外成本
+   未提供骨架價格 = 提供骨架價格 + 對應單體配件價格 + REFORGE_SURCHARGE
    basePart 要跟 PARTS 清單裡的 name 完全一致，才能正確對到單體價格。
    ===================================================================== */
+const RAW_MATERIAL_PRICE = {
+  cedarLog:     28000, // 柳杉原木，改這個數字調整全部改級價格
+  titaniumOre:  18000, // 純鈦礦，改這個數字調整全部改級價格
+};
+const REFORGE_MARKUP = 1.5; // 用料成本的加價倍率（成本 × 1.5）
 const REFORGE_SURCHARGE = 20000;
 
+// 用料成本＝ 27個柳杉原木 + 27個純鈦礦（每項改級共通），乘上加價倍率
+const REFORGE_MATERIAL_COST = Math.round(
+  (27 * RAW_MATERIAL_PRICE.cedarLog + 27 * RAW_MATERIAL_PRICE.titaniumOre) * REFORGE_MARKUP
+);
+
 const REFORGED_BASE = [
-  { id:'r-4000', name:'腔棘魚改級船體',   hullPrice:{A:850000, B:850000},   basePart:'腔棘魚級船體' },
-  { id:'r-5000', name:'希爾德拉改級船體', hullPrice:{A:900000, B:900000},   basePart:'希爾德拉級船體' },
-  { id:'r-0200', name:'甲鱟改級船尾',     hullPrice:{A:1250000, B:1250000}, basePart:'甲鱟級船尾' },
-  { id:'r-0100', name:'鯊魚改級船尾',     hullPrice:{A:880000, B:900000},   basePart:'鯊魚級船尾' },
-  { id:'r-0020', name:'甲鱟改級船首',     hullPrice:{A:1250000, B:1250000}, basePart:'甲鱟級船首' },
-  { id:'r-0050', name:'希爾德拉改級船首', hullPrice:{A:800000, B:800000},   basePart:'希爾德拉級船首' },
-  { id:'r-0004b',name:'腔棘魚改級艦橋',   hullPrice:{A:850000, B:850000},   basePart:'腔棘魚級艦橋' },
+  { id:'r-4000', name:'腔棘魚改級船體',   extraCost:{A:283000, B:283000}, basePart:'腔棘魚級船體' },
+  { id:'r-5000', name:'希爾德拉改級船體', extraCost:{A:333000, B:333000}, basePart:'希爾德拉級船體' },
+  { id:'r-0200', name:'甲鱟改級船尾',     extraCost:{A:683000, B:683000}, basePart:'甲鱟級船尾' },
+  { id:'r-0100', name:'鯊魚改級船尾',     extraCost:{A:313000, B:333000}, basePart:'鯊魚級船尾' },
+  { id:'r-0020', name:'甲鱟改級船首',     extraCost:{A:683000, B:683000}, basePart:'甲鱟級船首' },
+  { id:'r-0050', name:'希爾德拉改級船首', extraCost:{A:233000, B:233000}, basePart:'希爾德拉級船首' },
+  { id:'r-0004b',name:'腔棘魚改級艦橋',   extraCost:{A:283000, B:283000}, basePart:'腔棘魚級艦橋' },
 ];
 
 function findPartByName(name){
@@ -657,19 +713,23 @@ function buildReforgedCatalog(){
       console.warn(`REFORGED_BASE 裡的 basePart「${entry.basePart}」在 PARTS 清單裡找不到，請檢查名稱是否打錯字`);
       continue;
     }
+    const hullPrice = {
+      A: REFORGE_MATERIAL_COST + entry.extraCost.A,
+      B: REFORGE_MATERIAL_COST + entry.extraCost.B
+    };
     hullItems.push({
       id: entry.id,
       name: `${entry.name}（買家提供骨架）`,
       shortLabel: entry.name,
-      price: { A: entry.hullPrice.A, B: entry.hullPrice.B }
+      price: { A: hullPrice.A, B: hullPrice.B }
     });
     nohullItems.push({
       id: `${entry.id}-nohull`,
       name: `${entry.name}（買家未提供骨架）`,
       shortLabel: entry.name,
       price: {
-        A: entry.hullPrice.A + basePart.price.A + REFORGE_SURCHARGE,
-        B: entry.hullPrice.B + basePart.price.B + REFORGE_SURCHARGE
+        A: hullPrice.A + basePart.price.A + REFORGE_SURCHARGE,
+        B: hullPrice.B + basePart.price.B + REFORGE_SURCHARGE
       }
     });
   }
@@ -1127,6 +1187,17 @@ function showStatus(msg, type){
   el.textContent = msg;
   el.className = 'status-msg ' + type;
 }
+
+function switchTab(tabName){
+  document.querySelectorAll('.tab-panel').forEach(el => el.style.display = 'none');
+  document.getElementById(`tab-${tabName}`).style.display = 'block';
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === tabName));
+}
+
+document.getElementById('tab-bar').addEventListener('click', function(e){
+  const btn = e.target.closest('.tab-btn');
+  if(btn) switchTab(btn.dataset.tab);
+});
 
 renderParts();
 renderCombos();

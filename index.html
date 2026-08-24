@@ -675,8 +675,8 @@ const COMBOS = [
    basePart 要跟 PARTS 清單裡的 name 完全一致，才能正確對到單體價格。
    ===================================================================== */
 const RAW_MATERIAL_PRICE = {
-  cedarLog:     28000, // 柳杉原木，改這個數字調整全部改級價格
-  titaniumOre:  18000, // 純鈦礦，改這個數字調整全部改級價格
+  cedarLog:     8000, // 柳杉原木，改這個數字調整全部改級價格
+  titaniumOre:  6000, // 純鈦礦，改這個數字調整全部改級價格
 };
 const REFORGE_MARKUP = 1.5; // 用料成本的加價倍率（成本 × 1.5）
 const REFORGE_SURCHARGE = 20000;
@@ -1213,6 +1213,30 @@ const oneMonthLater = new Date(today);
 oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
 document.getElementById('f-date').min = today.toISOString().split('T')[0];
 document.getElementById('f-date').max = oneMonthLater.toISOString().split('T')[0];
+
+/* ---------- 每日自動更新柳杉原木/純鈦礦價格 ----------
+   拿到最新價格後，重新算改級潛艇的價格並刷新畫面。
+   拿不到（網路問題、還沒設定好）就維持原本寫死的預設價格，不影響使用。 */
+async function refreshLiveMaterialPrices(){
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=prices`);
+    const data = await res.json();
+    let changed = false;
+    if(data.cedarLog){ RAW_MATERIAL_PRICE.cedarLog = data.cedarLog; changed = true; }
+    if(data.titaniumOre){ RAW_MATERIAL_PRICE.titaniumOre = data.titaniumOre; changed = true; }
+    if(changed){
+      const rebuilt = buildReforgedCatalog();
+      REFORGED.length = 0;
+      REFORGED.push(...rebuilt);
+      renderReforged();
+      updateManifest();
+    }
+  } catch(err){
+    console.warn('無法取得最新原料價格，改級潛艇維持預設價格', err);
+  }
+}
+refreshLiveMaterialPrices();
+
 </script>
 </body>
 </html>

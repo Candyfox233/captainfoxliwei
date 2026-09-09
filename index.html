@@ -626,38 +626,76 @@ const PARTS = [
   ]},
 ];
 
-const COMBOS = [
+/* =====================================================================
+   整組套裝 —— 價格自動 = 內含配件（includes）在 PARTS 裡的價格加總。
+   不用手動填 price，只要維護 includes 清單，配件漲跌價，套裝價格自動跟著算。
+
+   如果之後某組套裝想要有折扣或額外加價（不想單純等於配件加總），
+   可以加一個 priceAdjustment:{A:數字, B:數字} 欄位，正數是加價、負數是折扣，
+   沒有寫這個欄位就預設 0（完全等於加總）。
+   ===================================================================== */
+const COMBOS_BASE = [
   {
     id:'1111',
     name:'初始套裝（1111）',
-    price:{A:960000, B:960000},
-    includes:['鯊魚級船體','鯊魚級船尾','鯊魚級船首','鯊魚級艦橋']
+    includes:['鯊魚級船體','鯊魚級船尾','鯊魚級船首','鯊魚級艦橋'],
+    priceAdjustment:{A:0, B:0}
   },
   {
     id:'1121',
     name:'15級後進階套裝（1121）',
-    price:{A:1110000, B:1110000},
-    includes:['鯊魚級船體','鯊魚級船尾','甲鱟級船首','鯊魚級艦橋']
+    includes:['鯊魚級船體','鯊魚級船尾','甲鱟級船首','鯊魚級艦橋'],
+    priceAdjustment:{A:0, B:0}
   },
   {
     id:'3003',
     name:'練等升級套裝（3003）',
-    price:{A:920000, B:920000},
-    includes:['鬚鯨級船體','鬚鯨級艦橋']
+    includes:['鬚鯨級船體','鬚鯨級艦橋'],
+    priceAdjustment:{A:0, B:0}
   },
   {
     id:'3004',
     name:'撈金升級套裝（3004）',
-    price:{A:770000, B:770000},
-    includes:['鬚鯨級船體','腔棘魚級艦橋']
+    includes:['鬚鯨級船體','腔棘魚級艦橋'],
+    priceAdjustment:{A:0, B:0}
   },
   {
     id:'3124',
     name:'撈金畢業套裝（3124）',
-    price:{A:1400000, B:1400000},
-    includes:['鬚鯨級船體','鯊魚級船尾','甲鱟級船首','腔棘魚級艦橋']
+    includes:['鬚鯨級船體','鯊魚級船尾','甲鱟級船首','腔棘魚級艦橋'],
+    priceAdjustment:{A:0, B:0}
   },
 ];
+
+function findPartByName(name){
+  for(const cat of PARTS){
+    const found = cat.items.find(i => i.name === name);
+    if(found) return found;
+  }
+  return null;
+}
+
+function buildCombosCatalog(){
+  return COMBOS_BASE.map(entry => {
+    const price = { A: 0, B: 0 };
+    entry.includes.forEach(partName => {
+      const part = findPartByName(partName);
+      if(!part){
+        console.warn(`COMBOS_BASE「${entry.name}」裡的配件「${partName}」在 PARTS 清單找不到，請檢查名稱是否打錯字`);
+        return;
+      }
+      price.A += part.price.A;
+      price.B += part.price.B;
+    });
+    if(entry.priceAdjustment){
+      price.A += entry.priceAdjustment.A || 0;
+      price.B += entry.priceAdjustment.B || 0;
+    }
+    return { id: entry.id, name: entry.name, price, includes: entry.includes };
+  });
+}
+
+const COMBOS = buildCombosCatalog();
 
 /* =====================================================================
    改級潛艇 —— 每項改級都需要用到「9個柳杉木材（=27個柳杉原木+81個樹汁塊）」
@@ -691,14 +729,6 @@ const REFORGED_BASE = [
   { id:'r-0050', name:'希爾德拉改級船首', extraCost:{A:233000, B:233000}, basePart:'希爾德拉級船首' },
   { id:'r-0004b',name:'腔棘魚改級艦橋',   extraCost:{A:283000, B:283000}, basePart:'腔棘魚級艦橋' },
 ];
-
-function findPartByName(name){
-  for(const cat of PARTS){
-    const found = cat.items.find(i => i.name === name);
-    if(found) return found;
-  }
-  return null;
-}
 
 // 用料成本＝ 27個柳杉原木 + 27個純鈦礦（每項改級共通），乘上加價倍率
 // 寫成函式、每次呼叫都重新計算，這樣 RAW_MATERIAL_PRICE 被即時價格更新後，
